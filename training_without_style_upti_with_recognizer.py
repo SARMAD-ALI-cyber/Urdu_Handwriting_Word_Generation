@@ -49,7 +49,7 @@ cer_metric = load("cer")
 torch.cuda.empty_cache()
 
 OUTPUT_MAX_LEN = 95  # +2 for <GO> + groundtruth + <END>
-IMG_WIDTH = 1024
+IMG_WIDTH = 256
 IMG_HEIGHT = 64
 
 ### Borrowed from GANwriting ###
@@ -539,7 +539,7 @@ def main():
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--model_name', type=str, default='diffusionpen')
     parser.add_argument('--level', type=str, default='line')
-    parser.add_argument('--img_size', type=tuple, default=(64, 1024))
+    parser.add_argument('--img_size', type=tuple, default=(64, 256))
     parser.add_argument('--dataset', type=str, default='upti2_2')
     parser.add_argument('--image_folder', type=str, default='./images_upti2_2/images/train/')
     parser.add_argument('--gt_folder', type=str, default='./groundtruth_upti2/groundtruth/train/')
@@ -570,7 +570,7 @@ def main():
     args = parser.parse_args()
     print('torch version', torch.__version__)
     if args.wandb_log:
-        wandb.init(project='DiffScribe', entity='your_entity', name=args.dataset, config=args)
+        wandb.init(project='DiffScribe', name=args.dataset, config=args)
     setup_logging(args)
     load_urdu_recognizer(device=args.device)
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])

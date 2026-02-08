@@ -1,0 +1,8 @@
+urdu/
+__pycache__/
+Urdu_Word_Dataset/
+val/
+word_level_model/
+word_level_model_1st_try/
+wandb/
+testing/
