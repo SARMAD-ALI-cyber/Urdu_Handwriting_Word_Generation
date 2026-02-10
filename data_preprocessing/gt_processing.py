@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-
+from pathlib import Path
 # paths
-main_gt_file = "/data/hiwi/aali/Urdu_generation/Urdu_Handwriting_Word_Generation/Urdu_Word_Dataset/val/val_gt.txt"
-output_dir = "/data/hiwi/aali/Urdu_generation/Urdu_Handwriting_Word_Generation/Urdu_Word_Dataset/val/gt_txt"
-root_images_dir = "/data/hiwi/aali/Urdu_generation/Urdu_Handwriting_Word_Generation/Urdu_Word_Dataset/val/processed_images"
+main_gt_file = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\train_gt.txt"
+output_dir = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\gt_txt"
+root_images_dir = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\processed_images"
 
 os.makedirs(output_dir, exist_ok=True)
 
@@ -51,3 +51,9 @@ with open(main_gt_file, "r", encoding="utf-8") as f:
 
         with open(out_txt_path, "w", encoding="utf-8") as out_f:
             out_f.write(text)
+
+
+
+folder_path=Path(output_dir)
+jpg_files = list(folder_path.glob("*.txt"))
+print(f"Number of .txt files in gt_txt folder is: {len(jpg_files)}")

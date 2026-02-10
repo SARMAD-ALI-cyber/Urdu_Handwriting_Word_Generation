@@ -1,16 +1,22 @@
-import os
+from unsloth import FastVisionModel
+from transformers import AutoModel
 
-image_folder = './val/processed_images/'
-gt_folder = './val/gt_txt/'
+model, tokenizer = FastVisionModel.from_pretrained(
+    "nomypython/urdu-ocr-deepseek",
+    load_in_4bit=True,
+    auto_model=AutoModel,
+    trust_remote_code=True,
+)
 
-images = sorted([f for f in os.listdir(image_folder) if f.endswith('.jpg')])
-texts = sorted([f for f in os.listdir(gt_folder) if f.endswith('.txt')])
+FastVisionModel.for_inference(model)
 
-print(f"Total images: {len(images)}")
-print(f"Total texts: {len(texts)}")
-print(f"\nFirst 10 images:")
-for img in images[:10]:
-    print(f"  {img}")
-print(f"\nFirst 10 texts:")
-for txt in texts[:10]:
-    print(f"  {txt}")
+result = model.infer(
+    tokenizer,
+    prompt="<image>\nExtract Urdu text from this image:",
+    image_file=r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\test\processed_images\3.jpg",
+    image_size=64,
+    base_size=64,
+    crop_mode=False,
+)
+
+print(result)

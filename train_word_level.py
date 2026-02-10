@@ -1,4 +1,5 @@
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 import torch.nn as nn
 import numpy as np
@@ -308,11 +309,27 @@ def model_conv_transformer(vocab_size):
     model_transformer = EncoderDecoderModel(config=config)
     return model_conv, model_transformer
 
+def gpu_mem(prefix="", device=None):
+    if not torch.cuda.is_available():
+        return ""
+
+    device = device or torch.cuda.current_device()
+    allocated = torch.cuda.memory_allocated(device) / 1024**2
+    reserved = torch.cuda.memory_reserved(device) / 1024**2
+    max_alloc = torch.cuda.max_memory_allocated(device) / 1024**2
+
+    return (f"{prefix} GPU | "
+            f"Alloc: {allocated:.1f} MB | "
+            f"Res: {reserved:.1f} MB | "
+            f"Max: {max_alloc:.1f} MB")
+
 def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, val_loader, num_classes, style_extractor, vocab_size, noise_scheduler, transforms, args, tokenizer=None, text_encoder=None, lr_scheduler=None, letter2index=None):
     model.train()
     loss_meter = AvgMeter()
     print('Training started....')
     for epoch in range(args.epochs):
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
         # Curriculum for rec_weight
         current_rec_weight = min(args.rec_weight_start + (args.rec_weight_max - args.rec_weight_start) * (epoch / args.rec_curriculum_epochs), args.rec_weight_max)
         print(f'Epoch: {epoch}, Current Rec Weight: {current_rec_weight}')
@@ -344,6 +361,7 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
             
             # Rec loss (with fixes)
             if i % 50 == 0 and epoch >= args.rec_start_epoch:
+                print(gpu_mem(prefix=f"[E{epoch} I{i}] Before Rec"))
                 noise_scheduler.set_timesteps(15)
                 x_approx = noisy_images.clone()
                 for step in noise_scheduler.timesteps:
@@ -366,8 +384,10 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
                 outputs = recognizer_transformer(inputs_embeds=outputs_emb, labels=gt_labels)
                 rec_loss = outputs.loss
                 rec_loss = torch.clamp(rec_loss, max=5.0)
+                print(gpu_mem(prefix=f"[E{epoch} I{i}] After Rec"))
                 
                 if i % 50 == 0:
+                    print(gpu_mem(prefix=f"[Epoch {epoch} | Iter {i}]"))
                     mse_val = mse_loss(noise, predicted_noise).item()
                     print(f"  [Step {i}] MSE: {mse_val:.6f}, Rec: {rec_loss.item():.6f}, "
                           f"Weighted Rec: {(current_rec_weight * rec_loss).item():.6f}")
@@ -385,6 +405,7 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
                 lr_scheduler.step()
         
         # Sampling
+        print(gpu_mem(prefix=f"[Epoch {epoch} PEAK]"))
         if epoch % 1 == 0:
             val_batch = next(iter(val_loader))
             val_transcr = val_batch[1]
@@ -399,7 +420,7 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
             if args.wandb_log:
                 wandb.log({"Sampled images": wandb.Image(ema_sampled_images[0], caption=f"Epoch {epoch}")})
         
-        if epoch % 20 == 0:
+        if epoch % 2 == 0:
             torch.save(model.state_dict(), os.path.join(args.save_path, "models", "ckpt.pt"))
             torch.save(ema_model.state_dict(), os.path.join(args.save_path, "models", "ema_ckpt.pt"))
             torch.save(optimizer.state_dict(), os.path.join(args.save_path, "models", "optim.pt"))
@@ -455,17 +476,17 @@ def main():
     parser.add_argument('--img_size', type=tuple, default=(64, 256))  # Word-level size
     parser.add_argument('--dataset', type=str, default='word_generation')
     # Separate folders for train/val/test
-    parser.add_argument('--train_image_folder', type=str, default='./Urdu_Word_Dataset/train/processed_images/')
-    parser.add_argument('--train_gt_folder', type=str, default='./Urdu_Word_Dataset/train/gt_txt/')
-    parser.add_argument('--val_image_folder', type=str, default='./Urdu_Word_Dataset/val/processed_images/')
-    parser.add_argument('--val_gt_folder', type=str, default='./Urdu_Word_Dataset/val/gt_txt/')
-    parser.add_argument('--test_image_folder', type=str, default='./Urdu_Word_Dataset/test/processed_images/')
-    parser.add_argument('--test_gt_folder', type=str, default='./Urdu_Word_Dataset/test/gt_txt/')
+    parser.add_argument('--train_image_folder', type=str, default=r'.\Urdu_Word_Dataset\train\processed_images')
+    parser.add_argument('--train_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\train\gt_txt')
+    parser.add_argument('--val_image_folder', type=str, default=r'.\Urdu_Word_Dataset\val\processed_images')
+    parser.add_argument('--val_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\val\gt_txt')
+    parser.add_argument('--test_image_folder', type=str, default=r'.\Urdu_Word_Dataset\test\processed_images')
+    parser.add_argument('--test_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\test\gt_txt')
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--emb_dim', type=int, default=320)
     parser.add_argument('--num_heads', type=int, default=4)
     parser.add_argument('--num_res_blocks', type=int, default=1)
-    parser.add_argument('--save_path', type=str, default='./word_level_model')
+    parser.add_argument('--save_path', type=str, default=r'.\word_level_model')
     parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--wandb_log', type=bool, default=True)
     parser.add_argument('--color', type=bool, default=True)
@@ -488,7 +509,7 @@ def main():
     
     print('torch version', torch.__version__)
     if args.wandb_log:
-        wandb.init(project='WordGeneration', name=args.dataset, config=args)
+        wandb.init(project='WordGeneration', force=True, name=args.dataset, config=args)
     
     setup_logging(args)
     load_urdu_recognizer(device=args.device)
@@ -569,7 +590,7 @@ def main():
         ema_model.eval()
         
         # Sample some Urdu words
-        words = ['???', '???', '???', '???']
+        words = ['کون', 'سوچ', 'ملک', 'دین']
         s = 0
         labels = torch.tensor([s]).long().to(args.device)
         

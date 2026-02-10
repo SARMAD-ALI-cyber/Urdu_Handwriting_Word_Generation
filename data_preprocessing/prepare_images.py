@@ -1,5 +1,6 @@
 import PIL
 from PIL import Image, ImageOps
+from pathlib import Path
 import os
 
 IMG_WIDTH = 256
@@ -20,15 +21,15 @@ def resize_pad(image):
     return image
 
 
-iam_path = '/data/hiwi/aali/Urdu_generation/Urdu_Handwriting_Word_Generation/Urdu_Word_Dataset/val/images'
-save_dir = '/data/hiwi/aali/Urdu_generation/Urdu_Handwriting_Word_Generation/Urdu_Word_Dataset/val/processed_images'
+iam_path = r'C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\val\images'
+save_dir = r'C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\val\processed_images'
 
 image_paths = [os.path.join(root, file)
                for root, _, files in os.walk(iam_path)
                for file in files]
 
 for image_path in image_paths:
-    image_name = image_path.split('/')[-1]
+    image_name = os.path.basename(image_path)
     print(image_name)
     
     save_path = os.path.join(save_dir, image_name)
@@ -43,4 +44,7 @@ for image_path in image_paths:
     except PIL.UnidentifiedImageError:
         print('Error', image_path)
         continue
+folder_path=Path(save_dir)
+jpg_files = list(folder_path.glob("*.jpg"))
+print(f"Number of .jpg files in processed_images folder is: {len(jpg_files)}")
         
