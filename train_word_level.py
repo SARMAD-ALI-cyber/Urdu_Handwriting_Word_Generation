@@ -463,7 +463,7 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
             torch.save(model.state_dict(), os.path.join(args.save_path, "models", "ckpt.pt"))
             torch.save(ema_model.state_dict(), os.path.join(args.save_path, "models", "ema_ckpt.pt"))
             torch.save(optimizer.state_dict(), os.path.join(args.save_path, "models", "optim.pt"))
-        if epoch % 5==0:
+        if epoch>0 and epoch % 5==0:
             print(f"\nRunning CER validation at epoch {epoch}...")
             validate(
             diffusion=diffusion,
@@ -569,9 +569,9 @@ def main():
     vocab_size = len(character_classes) + num_tokens
     print('num of character classes', vocab_size)
     
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
-    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
-    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers,drop_last=True)
+    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,drop_last=True)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers,drop_last=True)
     
     if args.dataparallel:
         device_ids = [3, 4]

@@ -643,8 +643,8 @@ def validate(diffusion, model, vae, data_loader, num_classes, noise_scheduler, t
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=1000)
-    parser.add_argument('--batch_size', type=int, default=64)  # Increased for word-level
-    parser.add_argument('--num_workers', type=int, default=4, help='Number of DataLoader workers (use 0 for Windows to avoid crashes)')
+    parser.add_argument('--batch_size', type=int, default=8)  # Increased for word-level
+    parser.add_argument('--num_workers', type=int, default=0, help='Number of DataLoader workers (use 0 for Windows to avoid crashes)')
     parser.add_argument('--model_name', type=str, default='diffusionpen')
     parser.add_argument('--level', type=str, default='word')  # Changed to word
     parser.add_argument('--img_size', type=tuple, default=(64, 256))  # Word-level size
