@@ -21,8 +21,8 @@ def resize_pad(image):
     return image
 
 
-iam_path = r'C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\val\images'
-save_dir = r'C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\val\processed_images'
+iam_path = r'.\Urdu_Word_Dataset\val\images'
+save_dir = r'.\Urdu_Word_Dataset\val\processed_images'
 
 image_paths = [os.path.join(root, file)
                for root, _, files in os.walk(iam_path)

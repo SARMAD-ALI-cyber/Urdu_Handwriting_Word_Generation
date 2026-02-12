@@ -3,9 +3,9 @@
 import os
 from pathlib import Path
 # paths
-main_gt_file = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\train_gt.txt"
-output_dir = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\gt_txt"
-root_images_dir = r"C:\Users\sa2\sarmad\Urdu_Handwriting_Word_Generation\Urdu_Word_Dataset\train\processed_images"
+main_gt_file = r".\Urdu_Word_Dataset\val\val_gt.txt"
+output_dir = r".\Urdu_Word_Dataset\val\gt_txt"
+root_images_dir = r".\Urdu_Word_Dataset\val\processed_images"
 
 os.makedirs(output_dir, exist_ok=True)
 

@@ -67,14 +67,51 @@ def setup_logging(args):
     os.makedirs(os.path.join(args.save_path, 'models'), exist_ok=True)
     os.makedirs(os.path.join(args.save_path, 'images'), exist_ok=True)
 
-def save_images(images, path, args, **kwargs):
-    grid = torchvision.utils.make_grid(images, padding=0, **kwargs)
+def save_images(images, path, args, texts=None, **kwargs):
+    """
+    Save images as grid with optional text labels
+    
+    Args:
+        images: Tensor of images
+        path: Save path
+        args: Arguments
+        texts: Optional list of Urdu text labels for each image
+    """
+    grid = torchvision.utils.make_grid(images, padding=2, **kwargs)
     if args.latent:
         im = transforms.ToPILImage()(grid)
         im = im.convert('RGB' if args.color else 'L')
     else:
         ndarr = grid.permute(1, 2, 0).cpu().numpy()
         im = Image.fromarray(ndarr)
+    
+    # Add text labels if provided
+    if texts is not None:
+        from PIL import ImageDraw, ImageFont
+        draw = ImageDraw.Draw(im)
+        
+        # Try to load Urdu font, fallback to default
+        try:
+            # You'll need to provide path to an Urdu font file (e.g., Noto Nastaliq Urdu)
+            font = ImageFont.truetype("arial.ttf", 20)  # Replace with Urdu font path
+        except:
+            font = ImageFont.load_default()
+        
+        # Calculate positions for text (below each image in grid)
+        num_images = len(texts)
+        grid_width = im.width
+        img_width = grid_width // num_images if num_images > 0 else grid_width
+        
+        # Add text below each image
+        for i, text in enumerate(texts):
+            x_pos = i * img_width + 5  # 5px padding from left edge of each cell
+            y_pos = im.height - 25     # 25px from bottom
+            
+            # Draw text with white background for visibility
+            text_bbox = draw.textbbox((x_pos, y_pos), text, font=font)
+            draw.rectangle(text_bbox, fill='white')
+            draw.text((x_pos, y_pos), text, fill='black', font=font)
+    
     im.save(path)
     return im
 
@@ -414,17 +451,19 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
             
             # Sample some words
             ema_sampled_images = diffusion.sampling(ema_model, vae, n=n, x_text=val_transcr[:n], labels=labels, args=args, style_extractor=None, noise_scheduler=noise_scheduler, transform=transforms, character_classes=None, tokenizer=tokenizer, text_encoder=text_encoder)
-            save_images(ema_sampled_images, os.path.join(args.save_path, 'images', f"{epoch}_ema.jpg"), args)
+            save_images(ema_sampled_images, os.path.join(args.save_path, 'images', f"{epoch}_ema.jpg"), args, texts=val_transcr[:n])
             torch.cuda.empty_cache()
             
             if args.wandb_log:
-                wandb.log({"Sampled images": wandb.Image(ema_sampled_images[0], caption=f"Epoch {epoch}")})
+                words_caption = " | ".join(val_transcr[:n])
+                caption = f"Epoch {epoch} - With words: {words_caption}"
+                wandb.log({"Sampled images": wandb.Image(ema_sampled_images[0], caption=caption)})
         
         if epoch % 2 == 0:
             torch.save(model.state_dict(), os.path.join(args.save_path, "models", "ckpt.pt"))
             torch.save(ema_model.state_dict(), os.path.join(args.save_path, "models", "ema_ckpt.pt"))
             torch.save(optimizer.state_dict(), os.path.join(args.save_path, "models", "optim.pt"))
-        if epoch % 2==0:
+        if epoch % 5==0:
             print(f"\nRunning CER validation at epoch {epoch}...")
             validate(
             diffusion=diffusion,

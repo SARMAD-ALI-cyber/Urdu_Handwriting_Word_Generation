@@ -1,4 +1,4 @@
-python train_word_level_with_resume_v2.py `
+python train_word_level.py `
     --batch_size 8 `
     --epochs 1000 `
     --rec_start_epoch 50 `
@@ -7,7 +7,7 @@ python train_word_level_with_resume_v2.py `
     --rec_curriculum_epochs 150 `
     --wandb_log True `
     --train_mode train `
-    --resume_training True `
+    --load_check True `
     
     
 
