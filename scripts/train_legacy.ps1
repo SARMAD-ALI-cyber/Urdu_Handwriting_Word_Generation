@@ -10,7 +10,7 @@
 #     --train_mode train `
 #     --load_check True `
 
-
+# current ly we started after 93 epochs
 python train_word_level.py `
     --batch_size 8 `
     --epochs 1000 `
