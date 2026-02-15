@@ -93,7 +93,7 @@ def save_images(images, path, args, texts=None, **kwargs):
         # Try to load Urdu font, fallback to default
         try:
             # You'll need to provide path to an Urdu font file (e.g., Noto Nastaliq Urdu)
-            font = ImageFont.truetype("arial.ttf", 20)  # Replace with Urdu font path
+            font = ImageFont.truetype("urdu_font.ttf", 20)  # Replace with Urdu font path
         except:
             font = ImageFont.load_default()
         
@@ -398,7 +398,7 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
             
             # Rec loss (with fixes)
             if i % 50 == 0 and epoch >= args.rec_start_epoch:
-                print(gpu_mem(prefix=f"[E{epoch} I{i}] Before Rec"))
+                
                 noise_scheduler.set_timesteps(15)
                 x_approx = noisy_images.clone()
                 for step in noise_scheduler.timesteps:
@@ -421,10 +421,10 @@ def train(diffusion, model, ema, ema_model, vae, optimizer, mse_loss, loader, va
                 outputs = recognizer_transformer(inputs_embeds=outputs_emb, labels=gt_labels)
                 rec_loss = outputs.loss
                 rec_loss = torch.clamp(rec_loss, max=5.0)
-                print(gpu_mem(prefix=f"[E{epoch} I{i}] After Rec"))
+                
                 
                 if i % 50 == 0:
-                    print(gpu_mem(prefix=f"[Epoch {epoch} | Iter {i}]"))
+                    
                     mse_val = mse_loss(noise, predicted_noise).item()
                     print(f"  [Step {i}] MSE: {mse_val:.6f}, Rec: {rec_loss.item():.6f}, "
                           f"Weighted Rec: {(current_rec_weight * rec_loss).item():.6f}")
@@ -508,24 +508,24 @@ def validate(diffusion, model, vae, data_loader, num_classes, noise_scheduler, t
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=1000)
-    parser.add_argument('--batch_size', type=int, default=8)  # Increased for word-level
+    parser.add_argument('--batch_size', type=int, default=16)  # Increased for word-level
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--model_name', type=str, default='diffusionpen')
     parser.add_argument('--level', type=str, default='word')  # Changed to word
     parser.add_argument('--img_size', type=tuple, default=(64, 256))  # Word-level size
     parser.add_argument('--dataset', type=str, default='word_generation')
     # Separate folders for train/val/test
-    parser.add_argument('--train_image_folder', type=str, default=r'.\Urdu_Word_Dataset\train\processed_images')
-    parser.add_argument('--train_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\train\gt_txt')
-    parser.add_argument('--val_image_folder', type=str, default=r'.\Urdu_Word_Dataset\val\processed_images')
-    parser.add_argument('--val_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\val\gt_txt')
-    parser.add_argument('--test_image_folder', type=str, default=r'.\Urdu_Word_Dataset\test\processed_images')
-    parser.add_argument('--test_gt_folder', type=str, default=r'.\Urdu_Word_Dataset\test\gt_txt')
+    parser.add_argument('--train_image_folder', type=str, default=r'./Urdu_Word_Dataset/train/processed_images')
+    parser.add_argument('--train_gt_folder', type=str, default=r'./Urdu_Word_Dataset/train/gt_txt')
+    parser.add_argument('--val_image_folder', type=str, default=r'./Urdu_Word_Dataset/val/processed_images')
+    parser.add_argument('--val_gt_folder', type=str, default=r'./Urdu_Word_Dataset/val/gt_txt')
+    parser.add_argument('--test_image_folder', type=str, default=r'./Urdu_Word_Dataset/test/processed_images')
+    parser.add_argument('--test_gt_folder', type=str, default=r'./Urdu_Word_Dataset/test/gt_txt')
     parser.add_argument('--channels', type=int, default=4)
     parser.add_argument('--emb_dim', type=int, default=320)
     parser.add_argument('--num_heads', type=int, default=4)
     parser.add_argument('--num_res_blocks', type=int, default=1)
-    parser.add_argument('--save_path', type=str, default=r'.\word_level_model')
+    parser.add_argument('--save_path', type=str, default=r'./word_level_model')
     parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--wandb_log', type=bool, default=True)
     parser.add_argument('--color', type=bool, default=True)
